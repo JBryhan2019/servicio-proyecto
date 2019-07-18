@@ -185,7 +185,29 @@ router.post("/tienda", (req, res) => {
     });
   });
 });
+router.get("/Tienda",  (req, res) => {
+  var skip = 0;
+  var limit = "";
+  if (req.query.skip != null) {
+    skip = req.query.skip;
+  }
 
+  if (req.query.limit != null) {
+    limit = req.query.limit;
+  }
+  Tienda.find({}).skip(skip).limit(limit).exec((err, docs) => {
+    if (err) {
+      res.status(500).json({
+        "msn" : "Error en la db"
+      });
+      
+      return;
+    }
+    res.json({
+      result : docs
+    });
+  });
+});
 
 
 
@@ -348,42 +370,7 @@ router.delete('/categoria/:id', (req, res,) => {
 
 });
 
-router.patch("/categoria",(req, res) => {
-  var params = req.body;
-  var id = req.query.id;
-  var keys = Object.keys(params);
-  var updatekeys = ["nombre", "precio", "descripcion", "foto"];
-  var newkeys = [];
-  var values = [];
 
-  for (var i  = 0; i < updatekeys.length; i++) {
-    var index = keys.indexOf(updatekeys[i]);
-    if (index != -1) {
-        newkeys.push(keys[index]);
-        values.push(params[keys[index]]);
-    }
-  }
-  var objupdate = {}
-  for (var i  = 0; i < newkeys.length; i++) {
-      objupdate[newkeys[i]] = values[i];
-  }
-  console.log(objupdate);
-  Categoria.findOneAndUpdate({_id: id}, objupdate ,(err, docs) => {
-    if (err) {
-      res.status(500).json({
-          msn: "Existe un error en la base de datos"
-      });
-      return;
-    }
-    res.status(200).json({
-      "resp": 200,
-      "dato": categoria,
-      "msn" :  "Categoria  editado con exito"
-    });
-    return;
-    
-  });
-});
 
 router.patch('/categoria',(req,res)=>{
   let act=req.body;
