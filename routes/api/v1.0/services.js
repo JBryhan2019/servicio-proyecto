@@ -185,29 +185,7 @@ router.post("/tienda", (req, res) => {
     });
   });
 });
-router.get("/Tienda",  (req, res) => {
-  var skip = 0;
-  var limit = "";
-  if (req.query.skip != null) {
-    skip = req.query.skip;
-  }
 
-  if (req.query.limit != null) {
-    limit = req.query.limit;
-  }
-  Tienda.find({}).skip(skip).limit(limit).exec((err, docs) => {
-    if (err) {
-      res.status(500).json({
-        "msn" : "Error en la db"
-      });
-      
-      return;
-    }
-    res.json({
-      result : docs
-    });
-  });
-});
 
 
 
@@ -266,18 +244,7 @@ router.patch(/tienda\/[a-z0-9]{1,}$/, (req, res) => {
   });
 });
 //Actualiza los datos del tienda
-router.put(/tienda\/[a-z0-9]{1,}$/, verifytoken,(req, res) => {
-  var url = req.url;
-  var id = url.split("/")[2];
-  var keys  = Object.keys(req.body);
-  var oficialkeys = ['nombre', 'nit', 'propiedad', 'calle', 'telefono', 'lat', 'lon'];
-  var result = _.difference(oficialkeys, keys);
-  if (result.length > 0) {
-    res.status(400).json({
-      "msn" : "error nose puede  actualizar  utilice patch  para la actualizar"
-    });
-    return;
-  }
+
 
   var tienda = {
     nombre : req.body.Nombre,
