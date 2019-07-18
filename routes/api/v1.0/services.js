@@ -1,5 +1,21 @@
 var express = require('express');
+const multer = require('multer');
+var io = require('socket.io');
+var router = express.Router();
+var fs = require('fs');
+var _ = require("underscore");
 
+var Img = require("../../../database/collections/img");
+
+var Categoria = require("../../../database/collections/categoria");
+var Producto = require("../../../database/collections/producto");
+var Tienda = require("../../../database/collections/tienda");
+var Cliente = require("../../../database/collections/../../database/collections/cliente");
+var Users = require("../../../database/collections/../../database/collections/users");
+var Detalle = require("../../../database/collections/../../database/collections/detalle");
+//var Mensaje = require("../../../database/collections/mensaje");
+
+var jwt = require("jsonwebtoken");
 
 
 const storage = multer.diskStorage({
