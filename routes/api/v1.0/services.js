@@ -46,7 +46,110 @@ const upload = multer({
   
 })
 
+router.post("/login", (req, res, next) => {
+  var email = req.body.email;
+  var password = req.body.password;
+  var result = Cliente.findOne({email: email,password: password}).exec((err, doc) => {
+    if (err) {
+      res.status(300).json({
+        msn : "No se puede concretar con la peticion "
+      });
+      return;
+    }
+    console.log(doc);
+    if (doc) {
+       console.log(result);
+      //res.status(200).json(doc);
+      jwt.sign({name: doc.email, password: doc.password}, "secretkey123", (err, token) => {
+          console.log(result);
+          res.status(200).json({
+            resp:200,
+            token : token,
+            dato:doc
+          });
+      })
+    } else {
+      res.status(400).json({
+        resp: 400,
+        msn : "El usuario no existe ne la base de datos"
+      });
+    }
+  });
+});
+// instalar Middelware con npm install
+function verifytoken (req, res, next) {
+  //Recuperar el header
+  const header = req.headers["authorization"];
+  if (header  == undefined) {
+      res.status(403).json({
+        msn: "No autorizado"
+      })
+  } else {
+      req.token = header.split(" ")[1];
+      jwt.verify(req.token, "secretkey123", (err, authData) => {
+        if (err) {
+          res.status(403).json({
+            msn: "No autorizado"
+          })
+        } else {
+          next();
+        }
+      });
+  }
+}
 
+router.post(/tiendaimg\/[a-z0-9]{1,}$/, (req, res) => {
+  var url = req.url;
+  var id = url.split("/")[2];
+  upload(req, res, (err) => {
+    if (err) {
+      res.status(500).json({
+        "msn" : "No se ha podido subir la imagen"
+      });
+    } else {
+      var ruta = req.file.path.substr(6, req.file.path.length);
+      console.log(ruta);
+      var img = {
+        idtienda: req.body.idtienda,
+        name : req.file.originalname,
+        physicalpath: req.file.path,
+        relativepath: "http://localhost:7777" + ruta
+      };
+      var imgData = new Img(img);
+      imgData.save().then( (infoimg) => {
+       var tienda = {
+          fotolugar: new Array()
+        }
+        Tienda.findOne({_id:id}).exec( (err, docs) =>{
+          //console.log(docs);
+          var data = docs.fotolugar;
+          console.log('data ', data);
+
+          var aux = new  Array();
+          if (data.length == 1 && data[0] == "") {
+            Tienda.fotolugar.push("/api/v1.0/tiendaimg/" + infoimg._id)
+          } else {
+            aux.push("/api/v1.0/tiendaimg/" + infoimg._id);
+            data = data.concat(aux);
+            Tienda.fotolugar = data;
+          }
+          Tienda.findOneAndUpdate({_id : id}, tienda, (err, params) => {
+              if (err) {
+                res.status(500).json({
+                  "msn" : "error en la actualizacion del usuario"
+                });
+                return;
+              }
+              res.status(200).json(
+                req.file
+              );
+              return;
+          });
+        });
+      });
+    }
+  });
+});
 router.get(/tiendaimg\/[a-z0-9]{1,}$/, (req, res) => {
   var url = req.url;
   var id = url.split("/")[2];
@@ -163,7 +266,18 @@ router.patch(/tienda\/[a-z0-9]{1,}$/, (req, res) => {
   });
 });
 //Actualiza los datos del tienda
-
+router.put(/tienda\/[a-z0-9]{1,}$/, verifytoken,(req, res) => {
+  var url = req.url;
+  var id = url.split("/")[2];
+  var keys  = Object.keys(req.body);
+  var oficialkeys = ['nombre', 'nit', 'propiedad', 'calle', 'telefono', 'lat', 'lon'];
+  var result = _.difference(oficialkeys, keys);
+  if (result.length > 0) {
+    res.status(400).json({
+      "msn" : "error nose puede  actualizar  utilice patch  para la actualizar"
+    });
+    return;
+  }
 
   var tienda = {
     nombre : req.body.Nombre,
@@ -267,7 +381,42 @@ router.delete('/categoria/:id', (req, res,) => {
 
 });
 
+router.patch("/categoria",(req, res) => {
+  var params = req.body;
+  var id = req.query.id;
+  var keys = Object.keys(params);
+  var updatekeys = ["nombre", "precio", "descripcion", "foto"];
+  var newkeys = [];
+  var values = [];
 
+  for (var i  = 0; i < updatekeys.length; i++) {
+    var index = keys.indexOf(updatekeys[i]);
+    if (index != -1) {
+        newkeys.push(keys[index]);
+        values.push(params[keys[index]]);
+    }
+  }
+  var objupdate = {}
+  for (var i  = 0; i < newkeys.length; i++) {
+      objupdate[newkeys[i]] = values[i];
+  }
+  console.log(objupdate);
+  Categoria.findOneAndUpdate({_id: id}, objupdate ,(err, docs) => {
+    if (err) {
+      res.status(500).json({
+          msn: "Existe un error en la base de datos"
+      });
+      return;
+    }
+    res.status(200).json({
+      "resp": 200,
+      "dato": categoria,
+      "msn" :  "Categoria  editado con exito"
+    });
+    return;
+    
+  });
+});
 
 router.patch('/categoria',(req,res)=>{
   let act=req.body;
